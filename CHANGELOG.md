@@ -2,6 +2,14 @@
 
 All versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH`
 
+## [1.5.0] - 2026-11-14
+### เพิ่ม
+- เชื่อมกับ Google Sheets จริง (config.js มี URL ของ Apps Script แล้ว)
+- ทุกการเช็คชื่อบันทึกลงชีต Attendance และสรุปแบบย่อลงชีต Data (timestamp, name, note)
+- Code.gs ยังรองรับ API เดิมของบทที่ 6 (GET อ่านชีต Data, POST {name, note})
+### เปลี่ยน
+- ล็อกเขตเวลาเป็น Asia/Bangkok ในโค้ด และ setup() สร้าง ADMIN_KEY ให้อัตโนมัติถ้ายังไม่มี
+
 ## [1.4.0] - 2026-11-14
 ### เพิ่ม
 - ป้ายเวอร์ชันในกล่องนาฬิกา แตะเพื่อดูประวัติการอัปเดตและลิงก์ไป GitHub

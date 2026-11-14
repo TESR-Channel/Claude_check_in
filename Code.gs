@@ -8,6 +8,8 @@
 
 const SAVE_SIGNATURE_TO_DRIVE = true;               // เก็บไฟล์ลายเซ็น .png ไว้ใน Drive แล้วใส่ลิงก์ในชีต
 const SIGNATURE_FOLDER = 'Attendance Signatures';   // ชื่อโฟลเดอร์ใน Drive
+const TZ = 'Asia/Bangkok';                          // เขตเวลาที่ใช้บันทึก
+const DATA_SHEET = 'Data';                           // ชีตสรุปแบบย่อ (timestamp, name, note) ถ้าไม่มีชีตนี้จะข้ามไป
 
 const R_HEAD = ['id', 'ชื่อ-นามสกุล', 'หน่วยงาน', 'ชื่อภาษาอังกฤษ'];
 const A_HEAD = ['วันที่', 'id', 'ชื่อ-นามสกุล', 'หน่วยงาน', 'เวลาเช็คอิน', 'สถานะ', 'สาย (นาที)', 'บันทึกเมื่อ (ISO)', 'ลิงก์ลายเซ็น', 'ลายเซ็น (ข้อมูลภาพ)'];
@@ -20,7 +22,11 @@ function setup() {
   const s = sheet_('Settings', S_HEAD);
   if (s.getLastRow() < 2) s.getRange(2, 1, 3, 2).setValues([['title', 'Claude AI'], ['start', '09:00'], ['grace', 15]]);
   if (SAVE_SIGNATURE_TO_DRIVE) folder_();
-  if (!adminKey_()) Logger.log('⚠️ ยังไม่ได้ตั้ง ADMIN_KEY ใน Project Settings › Script Properties');
+  if (!adminKey_()) {
+    const key = Utilities.getUuid().replace(/-/g, '').slice(0, 10);
+    PropertiesService.getScriptProperties().setProperty('ADMIN_KEY', key);
+    Logger.log('สร้างรหัสผู้ดูแล (ADMIN_KEY) ให้แล้ว: ' + key + '  ← จดไว้ ใช้ใส่ที่ปุ่มตั้งค่าบนหน้าเว็บ (#admin) เปลี่ยนได้ที่ Project Settings › Script Properties');
+  }
   Logger.log('ติดตั้งเรียบร้อย ไป Deploy เป็น Web app ต่อได้เลย');
 }
 
@@ -28,7 +34,12 @@ function doGet(e) {
   const p = (e && e.parameter) || {};
   try {
     if (p.action === 'state') return out_(state_(String(p.date || today_())));
-    return out_({ ok: true, hello: 'TESR attendance API', admin_key_set: !!adminKey_() });
+    if (p.action === 'ping') return out_({ ok: true, hello: 'TESR attendance API', admin_key_set: !!adminKey_() });
+    // เข้ากันได้กับ API บทที่ 6: GET ปกติคืนข้อมูลในชีต Data เป็นรายการ object
+    const data = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(DATA_SHEET);
+    if (!data) return out_({ ok: true, hello: 'TESR attendance API', admin_key_set: !!adminKey_() });
+    const [header, ...rows] = data.getDataRange().getValues();
+    return out_(rows.map(r => Object.fromEntries(header.map((h, i) => [h, r[i]]))));
   } catch (err) {
     return out_({ ok: false, error: String(err.message || err) });
   }
@@ -42,6 +53,10 @@ function doPost(e) {
     if (b.action === 'checkin') return out_(checkin_(b));
     if (b.action === 'uncheck') { auth_(b); return out_(uncheck_(b)); }
     if (b.action === 'saveClass') { auth_(b); return out_(saveClass_(b.cls || {})); }
+    if (!b.action && b.name) { // เข้ากันได้กับ API บทที่ 6: POST {name, note} เพิ่มแถวในชีต Data
+      SpreadsheetApp.getActiveSpreadsheet().getSheetByName(DATA_SHEET).appendRow([new Date(), b.name, b.note]);
+      return out_({ ok: true });
+    }
     return out_({ ok: false, error: 'unknown_action' });
   } catch (err) {
     return out_({ ok: false, error: String(err.message || err) });
@@ -81,6 +96,11 @@ function checkin_(b) {
   }
   s.appendRow([b.date, String(b.pid), r.name || '', r.org || '', r.time || '', r.status || '',
     r.late === '' || r.late == null ? '' : Number(r.late), r.t || new Date().toISOString(), link, sig.slice(0, 49000)]);
+  const data = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(DATA_SHEET);
+  if (data) {
+    const when = r.t ? new Date(r.t) : new Date();
+    data.appendRow([Utilities.formatDate(when, TZ, 'dd/MM/yyyy HH:mm'), r.name || '', r.status === 'สาย' ? 'สาย' : 'มา']);
+  }
   return { ok: true };
 }
 
@@ -116,7 +136,7 @@ function auth_(b) {
 function settings_() {
   const o = { title: 'Claude AI', start: '09:00', grace: 15 };
   sheet_('Settings', S_HEAD).getDataRange().getValues().slice(1).forEach(r => { if (r[0]) o[String(r[0])] = r[1]; });
-  if (o.start instanceof Date) o.start = Utilities.formatDate(o.start, Session.getScriptTimeZone(), 'HH:mm');
+  if (o.start instanceof Date) o.start = Utilities.formatDate(o.start, TZ, 'HH:mm');
   o.start = String(o.start); o.title = String(o.title); o.grace = Number(o.grace) || 0;
   return o;
 }
@@ -146,9 +166,9 @@ function folder_() {
 function safe_(s) { return String(s).replace(/[\\/:*?"<>|]+/g, '').slice(0, 60); }
 
 function fmtDate_(v) {
-  return v instanceof Date ? Utilities.formatDate(v, Session.getScriptTimeZone(), 'yyyy-MM-dd') : String(v);
+  return v instanceof Date ? Utilities.formatDate(v, TZ, 'yyyy-MM-dd') : String(v);
 }
 
-function today_() { return Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd'); }
+function today_() { return Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd'); }
 
 function out_(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }

@@ -9,6 +9,6 @@
  * URL นี้ไม่ใช่ความลับ ส่วนรหัสผู้ดูแล (ADMIN_KEY) อยู่ใน Script Properties ของ Apps Script ห้ามใส่ไว้ในไฟล์นี้
  */
 window.ATTENDANCE_CONFIG = {
-  SHEET_API: '',
+  SHEET_API: 'https://script.google.com/macros/s/AKfycbw-2ToFKiqXyyNS8BmX_fIw__gxEItR7UXW3OvorUMYwHoAklLBQ73oyxk2NQRLsKbXpA/exec',
   POLL_MS: 15000
 };
