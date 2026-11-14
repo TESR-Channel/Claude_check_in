@@ -1,5 +1,7 @@
 # เว็บเช็คชื่อคลาส Claude AI
 
+**เวอร์ชันปัจจุบัน: 1.4.0** · [ประวัติการอัปเดต](CHANGELOG.md) · เว็บ: https://tesr-channel.github.io/Claude_check_in/
+
 เว็บเช็คชื่อออนไลน์ ใช้ได้ทั้งมือถือ แท็บเล็ต และคอม ผู้เรียนค้นหาชื่อ เซ็นชื่อ แล้วกดยืนยัน ระบบบันทึกเวลาลง **Google Sheets** ให้ทันที
 
 - โฮสต์ฟรีบน **GitHub Pages** (เป็นไฟล์ static ไม่ต้องมีเซิร์ฟเวอร์)
@@ -11,12 +13,13 @@
 ## โครงสร้างไฟล์
 
 ```
-index.html                หน้าเว็บทั้งหมด
-config.js                 ใส่ URL ของ Apps Script ที่นี่ (ไฟล์เดียวที่ต้องแก้)
-apps-script/Code.gs       โค้ดหลังบ้านสำหรับ Google Sheets
-apps-script/appsscript.json  ไฟล์ตั้งค่า Apps Script (เขตเวลา Asia/Bangkok, Web app)
-docs/sample-roster.csv    ตัวอย่างไฟล์รายชื่อ (ชื่อสมมติ)
-.nojekyll                 ให้ GitHub Pages เสิร์ฟไฟล์ตรงๆ
+index.html          หน้าเว็บทั้งหมด (เลขเวอร์ชันอยู่ในนี้)
+config.js           ใส่ URL ของ Apps Script ที่นี่ (ไฟล์เดียวที่ต้องแก้)
+Code.gs             โค้ดหลังบ้านสำหรับ Google Sheets
+appsscript.json     ไฟล์ตั้งค่า Apps Script (เขตเวลา Asia/Bangkok, Web app)
+sample-roster.csv   ตัวอย่างไฟล์รายชื่อ (ชื่อสมมติ)
+CHANGELOG.md        ประวัติการอัปเดตแต่ละเวอร์ชัน
+.nojekyll           ให้ GitHub Pages เสิร์ฟไฟล์ตรงๆ
 ```
 
 ---
@@ -25,9 +28,9 @@ docs/sample-roster.csv    ตัวอย่างไฟล์รายชื่
 
 1. สร้าง Google Sheets ใหม่ (เช่น ชื่อ "เช็คชื่อ Claude AI")
 2. เมนู **ส่วนขยาย › Apps Script**
-3. ลบโค้ดเดิมทิ้ง แล้ววางเนื้อหาจาก `apps-script/Code.gs`
+3. ลบโค้ดเดิมทิ้ง แล้ววางเนื้อหาจาก `Code.gs`
 4. ไอคอนเฟือง **Project Settings**:
-   - ติ๊ก "Show appsscript.json" แล้ววางเนื้อหาจาก `apps-script/appsscript.json` (ตั้งเขตเวลาเป็นกรุงเทพฯ)
+   - ติ๊ก "Show appsscript.json" แล้ววางเนื้อหาจาก `appsscript.json` (ตั้งเขตเวลาเป็นกรุงเทพฯ)
    - ส่วน **Script Properties** › Add property › ชื่อ `ADMIN_KEY` › ค่าเป็นรหัสผู้ดูแลที่คุณตั้งเอง
 5. กลับไปหน้า Editor เลือกฟังก์ชัน `setup` แล้วกด **Run** และกดอนุญาตสิทธิ์ (Sheets + Drive สำหรับเก็บรูปลายเซ็น)
 6. **Deploy › New deployment** › เลือกประเภท **Web app**
@@ -69,6 +72,15 @@ window.ATTENDANCE_CONFIG = {
 | **Settings** | ชื่อคลาส, เวลาเริ่มเรียน, เวลาผ่อนผันสาย |
 
 รูปลายเซ็นทั้งหมดอยู่ในโฟลเดอร์ Drive ชื่อ **Attendance Signatures** ถ้าไม่ต้องการ ให้ตั้ง `SAVE_SIGNATURE_TO_DRIVE = false` ใน `Code.gs`
+
+## การออกเวอร์ชันใหม่
+
+1. เปิด `index.html` ค้นหา `const APP={version:` แล้วเปลี่ยนเลขเวอร์ชัน
+2. เพิ่มรายการใหม่ไว้บนสุดของ `CHANGES` (ข้อความนี้จะแสดงเมื่อกดป้ายเวอร์ชันบนเว็บ)
+3. เพิ่มหัวข้อใหม่ใน `CHANGELOG.md`
+4. Commit แล้ว push ไป `main` GitHub Pages จะอัปเดตเองภายในประมาณ 1 นาที
+
+หลักการตั้งเลข: แก้บั๊กเพิ่ม PATCH (1.4.0 › 1.4.1) · เพิ่มฟีเจอร์เพิ่ม MINOR (1.4.0 › 1.5.0) · เปลี่ยนใหญ่จนของเดิมใช้ไม่ได้เพิ่ม MAJOR (1.x › 2.0.0)
 
 ## หมายเหตุ
 

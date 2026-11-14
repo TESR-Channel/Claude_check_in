@@ -42,6 +42,11 @@ h1 span{color:var(--g)}
 .sync{display:flex;align-items:center;gap:6px;font-size:13px;margin-top:8px;color:var(--mut);white-space:nowrap}
 .sync i{width:8px;height:8px;border-radius:50%;background:var(--g);box-shadow:0 0 0 3px var(--mint2)}
 .sync[data-s=wait] i,.sync[data-s=slow] i{background:#f0b429;box-shadow:0 0 0 3px #fdf0cf}.sync[data-s=err] i{background:var(--red);box-shadow:0 0 0 3px #fbe0dd}
+.ver{margin-top:8px;font-size:12px;font-weight:600;color:var(--gd);background:var(--mint);border:1px solid var(--line);border-radius:99px;padding:2px 10px;cursor:pointer;font-variant-numeric:tabular-nums}.ver:hover{border-color:#a9dcbd}
+.cl{list-style:none;margin:14px 0 0;padding:0;display:grid;gap:14px}.cl>li{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 12px}
+.cl .vb{grid-row:span 2;align-self:start;font-weight:700;font-size:13px;background:var(--mint);color:var(--gd);border-radius:10px;padding:3px 9px;white-space:nowrap}.cl>li:first-child .vb{background:var(--g);color:#fff}
+.cl b{font-weight:600}.cl ul{margin:2px 0 0;padding-left:18px;color:var(--mut);font-size:15px}
+.gh{display:inline-flex;align-items:center;gap:8px;color:var(--gd);font-weight:600;text-decoration:none}.gh svg{width:18px;height:18px}
 .ringw{position:relative;width:104px;height:104px}.ringw svg{width:100%;height:100%}
 #arc{transition:stroke-dashoffset .6s ease}
 .rt{position:absolute;inset:0;display:grid;place-content:center;text-align:center;line-height:1.1}
@@ -169,7 +174,7 @@ label.drop svg{width:34px;height:34px;color:var(--g)}
    </div>
    <div class="mascot" data-m="hero" aria-hidden="true"></div>
    <div class="live">
-    <div><div class="clk" id="clk">--:--:--</div><div class="sync" id="sync" data-s="wait"><i></i><span>กำลังเชื่อมต่อ…</span></div></div>
+    <div><div class="clk" id="clk">--:--:--</div><div class="sync" id="sync" data-s="wait"><i></i><span>กำลังเชื่อมต่อ…</span></div><button class="ver" id="ver" aria-label="ดูเวอร์ชันและสิ่งที่อัปเดต">v–</button></div>
     <div class="ringw"><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="50" fill="none" stroke="#e3f6eb" stroke-width="12"/><circle id="arc" cx="60" cy="60" r="50" fill="none" stroke="#17a957" stroke-width="12" stroke-linecap="round" stroke-dasharray="314.2" stroke-dashoffset="314.2" transform="rotate(-90 60 60)"/></svg><div class="rt"><b id="rnum">0</b><span id="rtot">จาก 0 คน</span></div></div>
    </div>
   </div>
@@ -284,6 +289,15 @@ label.drop svg{width:34px;height:34px;color:var(--g)}
  </div>
 </div>
 
+<div class="ov" id="mVer" role="dialog" aria-modal="true" aria-labelledby="vT">
+ <div class="md">
+  <h2 id="vT">เวอร์ชัน</h2>
+  <p class="sub" id="vInfo" style="white-space:normal"></p>
+  <ul class="cl" id="vList"></ul>
+  <div class="acts"><a class="gh" id="vGh" href="https://github.com/TESR-Channel/Claude_check_in" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.53-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.56-.29-5.25-1.28-5.25-5.68 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.83 1.19 3.09 0 4.41-2.7 5.38-5.26 5.67.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5z"/></svg>ดูโค้ดบน GitHub</a><span class="sp"></span><button class="btn pri" data-close>ปิด</button></div>
+ </div>
+</div>
+
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" defer></script>
@@ -321,6 +335,26 @@ function errMsg(e){const c=e&&(e.code||e.error);return c==='invalid_argument'?'�
 function initials(n){n=String(n).replace(/^(นางสาว|นาย|นาง|น\.ส\.|คุณ|ดร\.|mr\.?|mrs\.?|ms\.?|dr\.?)\s*/i,'').trim();const c=[...n];if(!c.length)return '?';return /[เแโใไ]/.test(c[0])?c.slice(0,2).join(''):c[0].toUpperCase()}
 function status(r){if(!r)return null;const t=new Date(r.t);const [h,m]=String(S.cls.start||'09:00').split(':').map(Number);const st=new Date(S.date+'T00:00');st.setHours(h||0,m||0,0,0);const min=Math.floor((t-st)/60000);return min>(+S.cls.grace||0)?{late:true,min,txt:'สาย '+min+' นาที'}:{late:false,min:Math.max(0,min),txt:'ตรงเวลา'}}
 function hl(text,q){const t=String(text||'');if(!q)return esc(t);const i=t.toLowerCase().indexOf(q.toLowerCase());if(i<0)return esc(t);return esc(t.slice(0,i))+'<mark>'+esc(t.slice(i,i+q.length))+'</mark>'+esc(t.slice(i+q.length))}
+
+/* ---------- version (แก้เลขเวอร์ชันที่นี่ที่เดียว และเพิ่มรายการบนสุดของ CHANGES) ---------- */
+const APP={version:'1.4.0',repo:'TESR-Channel/Claude_check_in'};
+const CHANGES=[
+ ['1.4.0','2026-11-14','แสดงเวอร์ชันบนเว็บ + เชื่อม GitHub',['ป้ายเวอร์ชันในกล่องนาฬิกา แตะเพื่อดูประวัติการอัปเดต','ตัวการ์ตูนคลิปบอร์ดกับดินสอ เปลี่ยนท่าตามสถานการณ์','เอาป้ายด้านบนและข้อความท้ายเว็บออก']],
+ ['1.3.0','2026-11-14','บันทึกลง Google Sheets',['หลังบ้าน Google Apps Script: ทุกการเช็คชื่อเข้าชีต Attendance ทันที','เก็บรูปลายเซ็นใน Google Drive พร้อมลิงก์ในชีต','โหมดผู้สอนด้วย #admin และรหัสผู้ดูแล']],
+ ['1.2.0','2026-11-14','ค้นหาง่าย โทนสว่าง',['ช่องค้นหาใหญ่ ค้นได้ทั้งชื่อไทย อังกฤษ และบริษัท','โทนขาวเขียวสว่าง และรูปลายเซ็นเล็กบนการ์ด','นำเข้าไฟล์ Excel จาก Google Form (แยกคนที่ 2–5 อัตโนมัติ)']],
+ ['1.1.0','2026-11-14','รองรับทุกอุปกรณ์',['มือถือ แท็บเล็ต และคอม','หน้าเซ็นชื่อเลื่อนขึ้นจากด้านล่างบนมือถือ และหมุนจอได้โดยลายเซ็นไม่หาย']],
+ ['1.0.0','2026-11-14','เวอร์ชันแรก',['รายชื่อผู้เรียน กดเช็คชื่อ เซ็นชื่อ และบันทึกเวลา','ระบุตรงเวลา/สาย นำเข้า CSV/Excel และส่งออก']]];
+const fmtD=(s,opt)=>new Date(s).toLocaleString('th-TH-u-ca-gregory',opt||{day:'numeric',month:'short',year:'numeric'});
+$('#ver').textContent='v'+APP.version;
+$('#ver').onclick=()=>{
+ $('#vT').textContent='เวอร์ชัน '+APP.version;
+ $('#vInfo').textContent='อัปเดตล่าสุด '+fmtD(CHANGES[0][1]+'T00:00');
+ $('#vList').innerHTML=CHANGES.map(([v,d,t,items])=>`<li><span class="vb">v${v}</span><b>${esc(t)} <span class="sub" style="display:inline">· ${fmtD(d+'T00:00')}</span></b><ul>${items.map(i=>`<li>${esc(i)}</li>`).join('')}</ul></li>`).join('');
+ show('#mVer');
+ // บน GitHub Pages: ดึงเวลา commit ล่าสุดจาก GitHub (ในหน้า claude.ai จะถูกบล็อกและข้ามไปเงียบๆ)
+ fetch(`https://api.github.com/repos/${APP.repo}/commits?per_page=1`).then(r=>r.ok?r.json():null).then(j=>{if(j&&j[0]){const c=j[0];
+  $('#vInfo').textContent=`อัปเดตล่าสุด ${fmtD(CHANGES[0][1]+'T00:00')} · commit ล่าสุดบน GitHub ${fmtD(c.commit.committer.date,{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})} (${c.sha.slice(0,7)})`}}).catch(()=>{});
+};
 
 /* ---------- cute mascots (original SVG, made for this page) ---------- */
 const INK='#173a2a';
